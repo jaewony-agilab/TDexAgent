@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
-# Unattended install from a clean clone, on a cluster login/compute node (Linux, CUDA 12.x, uv >= 0.8.4).
-#   bash scripts/install_rldx.sh
+# Unattended install from a clean clone (Linux, CUDA 12.x, uv >= 0.8.4).
+# Must run on a GPU node: RLDX-1's sim setup ends with an EGL-rendered env smoke test.
+#   srun --gres=gpu:1 --cpus-per-task=8 --mem=64G -t 3:00:00 --pty bash scripts/install_rldx.sh
 # Env overrides: TDEX_THIRD_PARTY (default: <repo>/third_party), HF_HOME (checkpoint cache).
 set -euo pipefail
+
+# Preflight: without a GPU + libEGL the smoke test dies with
+# "'MjRenderContextOffscreen' object has no attribute 'con'" after most of the work is done.
+if ! nvidia-smi -L >/dev/null 2>&1; then
+  echo "no GPU visible (nvidia-smi failed). Run this on a GPU node, e.g.:"
+  echo "  srun --gres=gpu:1 --cpus-per-task=8 --mem=64G -t 3:00:00 --pty bash scripts/install_rldx.sh"
+  exit 1
+fi
+if ! ldconfig -p 2>/dev/null | grep -q 'libEGL\.so'; then
+  echo "libEGL.so not found: MuJoCo headless rendering (MUJOCO_GL=egl) will fail. Ask admins for libegl1 / the NVIDIA EGL libs."
+  exit 1
+fi
+export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TP="${TDEX_THIRD_PARTY:-$REPO/third_party}"
