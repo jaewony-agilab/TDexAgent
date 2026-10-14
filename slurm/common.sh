@@ -16,6 +16,18 @@ PIDS=()
 cleanup() { for p in "${PIDS[@]:-}"; do kill "$p" 2>/dev/null || true; done; }
 trap cleanup EXIT
 
+# Fail fast if this node cannot render headless (MuJoCo EGL). Skipped when no GPU is allocated
+# (phase0_replay). install_rldx.sh runs on CPU nodes and never checks this, so it happens here.
+check_render() {
+  "$SIM_PY" -c '
+import mujoco
+m = mujoco.MjModel.from_xml_string("<mujoco><worldbody><geom type=\"sphere\" size=\".1\"/></worldbody></mujoco>")
+r = mujoco.Renderer(m, 8, 8); r.update_scene(mujoco.MjData(m)); r.render(); r.close()' 2>"$SCRATCH/render_check.log" || {
+    echo "MuJoCo EGL rendering fails on $(hostname); see $SCRATCH/render_check.log."
+    echo "Try MUJOCO_EGL_DEVICE_ID=0, or ask admins for the NVIDIA EGL libs (libEGL_nvidia)."; exit 1; }
+}
+if [ -n "${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-}}" ]; then check_render; fi
+
 free_port() { "$SIM_PY" -c 'import socket; s=socket.socket(); s.bind(("",0)); print(s.getsockname()[1])'; }
 
 # start_policy_server [MODEL_PATH]  -> exports RLDX_PORT
