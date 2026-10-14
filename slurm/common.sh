@@ -50,11 +50,11 @@ import sys; sys.exit(0 if PolicyClient(host='127.0.0.1', port=$RLDX_PORT, timeou
 
 # start_vlm_server -> exports TDEX_VLM_URL
 start_vlm_server() {
-  local model="${TDEX_VLM_MODEL:-Qwen/Qwen2.5-VL-7B-Instruct}" port
+  local model="${TDEX_VLM_MODEL:-Qwen/Qwen3-VL-8B-Instruct}" port
   port="$(free_port)"
   "$VLM_PY" -m vllm.entrypoints.openai.api_server --model "$model" --port "$port" \
       --max-model-len 16384 --gpu-memory-utilization "${VLM_GPU_FRAC:-0.45}" \
-      --limit-mm-per-prompt image=4 > "$SCRATCH/vlm_server.log" 2>&1 &
+      --limit-mm-per-prompt '{"image": 4}' > "$SCRATCH/vlm_server.log" 2>&1 &
   PIDS+=($!)
   export TDEX_VLM_URL="http://127.0.0.1:$port/v1"
   for _ in $(seq 1 120); do

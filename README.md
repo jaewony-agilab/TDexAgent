@@ -45,7 +45,7 @@ One-time, from a clean clone:
 
 ```bash
 srun --cpus-per-task=8 --mem=32G -t 3:00:00 bash scripts/install_rldx.sh   # CPU node is fine; RLDX-1 @ pinned commit, model venv, GR-1 sim venv, tdex, checkpoint
-bash scripts/install_vlm.sh       # vLLM + Qwen2.5-VL (Phase 1+)
+bash scripts/install_vlm.sh       # vLLM + Qwen3-VL-8B (Phase 1+); CPU node is fine
 cp configs/costcaps.example.yaml configs/costcaps.yaml   # edit caps; planner/API judge refuse to run without it
 export ANTHROPIC_API_KEY=...      # in the cluster environment, never in the repo
 ```
