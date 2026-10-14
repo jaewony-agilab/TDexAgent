@@ -1,0 +1,8 @@
+# Copy to configs/costcaps.yaml on the cluster (gitignored) or point TDEX_COSTCAPS at it.
+# Planner / API-judge adapters refuse to start without this file.
+per_run_usd: 2.0
+global_usd: 100.0
+global_ledger: ${HOME}/tdex_ledger/global_ledger.jsonl
+prices_per_mtok:
+  # Claude Haiku 5.5 first-party list price for prompts up to 100K tokens (checked 2026-10-14).
+  claude-haiku-5-5: {input: 0.10, output: 0.50}

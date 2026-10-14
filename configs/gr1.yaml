@@ -1,0 +1,56 @@
+# GR-1 Tabletop (robocasa-gr1-tabletop-tasks, MuJoCo) + RLDX-1-FT-GR1.
+# Values marked CALIBRATE are placeholders until scripts/inspect_env.py has run (Phase 0).
+
+model_path: RLWRLD/RLDX-1-FT-GR1
+embodiment_tag: GENERAL_EMBODIMENT
+seed: 42                 # RLDX-1 eval default (rollout_policy --seed 42, env_idx 0)
+n_action_steps: 16       # eval_gr1.sh
+max_episode_steps: 720   # eval_gr1.sh
+
+# Selected after the Phase 0 sweep (executor-alone SR in 30-70%, >=1 grasp). Empty until then.
+selected_tasks: []
+
+# Phase 0 step 1 reproduction subset (picked before seeing any results: 2 articulated, 2 novel-PnP).
+repro_tasks:
+  - PnPCupToDrawerClose_GR1ArmsAndWaistFourierHands_Env
+  - PnPBottleToCabinetClose_GR1ArmsAndWaistFourierHands_Env
+  - PosttrainPnPNovelFromCuttingboardToBasketSplitA_GR1ArmsAndWaistFourierHands_Env
+  - PosttrainPnPNovelFromPlateToBowlSplitA_GR1ArmsAndWaistFourierHands_Env
+
+taxels:
+  # Body-name suffixes in robosuite's Fourier hand MJCF (robosuite 1.5.1). One taxel per link.
+  links:
+    right: {thumb: R_thumb_distal_link, index: R_index_intermediate_link, middle: R_middle_intermediate_link,
+            ring: R_ring_intermediate_link, pinky: R_pinky_intermediate_link, palm: r_palm}
+    left:  {thumb: L_thumb_distal_link, index: L_index_intermediate_link, middle: L_middle_intermediate_link,
+            ring: L_ring_intermediate_link, pinky: L_pinky_intermediate_link, palm: l_palm}
+  robot_prefixes: [robot0_, gripper0_]   # CALIBRATE: confirm with inspect_env.py body list
+  contact_threshold_n: 0.5
+
+closure:
+  # Hand command is 6-D. Dims 1-4 are finger flexion under both the robosuite order
+  # (pinky, ring, middle, index, thumb-bend, thumb-yaw) and its reverse, so they are order-agnostic.
+  flexion_dims: [1, 2, 3, 4]
+  open_value: 0.0          # CALIBRATE from inspect_env.py hand-command percentiles
+  closed_value: 1.5        # CALIBRATE
+  close_threshold: 0.6
+  open_threshold: 0.3
+  settle_vel_eps: 0.001
+  settle_steps: 3
+  max_settle_steps: 30
+
+render:
+  force_clip_n: 10.0       # CALIBRATE: 95th percentile of |F| over probe boundaries (Phase 1 step 1)
+
+gate:
+  max_retries: 2
+
+judge:
+  claude_model: claude-haiku-5-5
+  claude_effort: low
+  vlm_model: Qwen/Qwen2.5-VL-7B-Instruct
+  vlm_port: 8000
+
+planner:
+  model: claude-haiku-5-5
+  effort: low
